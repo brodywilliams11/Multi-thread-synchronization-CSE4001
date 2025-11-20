@@ -73,7 +73,7 @@ Semaphore Items(0);
 /*
     Producer function 
 */
-void *Producer ( void *threadID )
+void *Writer ( void *threadID )
 {
     // Thread number 
     int x = (long)threadID;
@@ -81,12 +81,10 @@ void *Producer ( void *threadID )
     while( 1 )
     {
         sleep(3); // Slow the thread down a bit so we can see what is going on
-        Spaces.wait();
-        Mutex.wait();
-            printf("Producer %d adding item to buffer \n", x);
+        
+            printf("Writer %d Writing...\n", x);
             fflush(stdout);
-        Mutex.signal();
-        Items.signal();
+        
     }
 
 }
@@ -94,19 +92,17 @@ void *Producer ( void *threadID )
 /*
     Consumer function 
 */
-void *Consumer ( void *threadID )
+void *Reader ( void *threadID )
 {
     // Thread number 
     int x = (long)threadID;
     
     while( 1 )
     {
-        Items.wait();
-        Mutex.wait();
-            printf("Consumer %d removing item from buffer \n", x);
+        
+            printf("Reader %d Reading... \n", x);
             fflush(stdout);
-        Mutex.signal();
-        Spaces.signal();
+        
         sleep(5);   // Slow the thread down a bit so we can see what is going on
     }
 
@@ -118,25 +114,28 @@ int main(int argc, char **argv )
     pthread_t producerThread[ numProducers ];
     pthread_t consumerThread[ numConsumers ];
 
+    pthread_t writerThread[ numProducers ];
+    pthread_t readerThread[ numConsumers ];
+
     // Create the producers 
-    for( long p = 0; p < numProducers; p++ )
+    for( long p = 0; p < 3; p++ )
     {
-        int rc = pthread_create ( &producerThread[ p ], NULL, 
-                                  Producer, (void *) (p+1) );
+        int rc = pthread_create ( &writerThread[ p ], NULL, 
+                                  Writer, (void *) (p+1) );
         if (rc) {
-            printf("ERROR creating producer thread # %d; \
+            printf("ERROR creating writer thread # %d; \
                     return code from pthread_create() is %d\n", p, rc);
             exit(-1);
         }
     }
 
     // Create the consumers 
-    for( long c = 0; c < numConsumers; c++ )
+    for( long c = 0; c < 2; c++ )
     {
-        int rc = pthread_create ( &consumerThread[ c ], NULL, 
-                                  Consumer, (void *) (c+1) );
+        int rc = pthread_create ( &readerThread[ c ], NULL, 
+                                  Reader, (void *) (c+1) );
         if (rc) {
-            printf("ERROR creating consumer thread # %d; \
+            printf("ERROR creating reader thread # %d; \
                     return code from pthread_create() is %d\n", c, rc);
             exit(-1);
         }
